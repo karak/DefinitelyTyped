@@ -1,4 +1,4 @@
-// Type definitions for node-diff-match-patch 0.1.1
+// Type definitions for node-diff-match-patch 0.1
 // Project: https://github.com/magicsky/node-diff-match-patch
 // Definitions by: Yasushi Kato <https://github.com/karak>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
