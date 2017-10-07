@@ -192,7 +192,10 @@ declare module 'diff-match-patch' {
 		 * for text1 to text2 (method 4) or undefined (methods 1,2,3).
 		 * @return {!Array.<!diff_match_patch.patch_obj>} Array of Patch objects.
 		 */
-		patch_make(a: string | diff_match_patch.Diff[], opt_b: string | diff_match_patch.Diff[], opt_c: string | diff_match_patch.Diff[]): string | diff_match_patch.patch_obj[];
+		patch_make(a: string, opt_b: string): diff_match_patch.patch_obj[];
+		patch_make(a: diff_match_patch.Diff[]): diff_match_patch.patch_obj[];
+		patch_make(a: string, opt_b: diff_match_patch.Diff[]): diff_match_patch.patch_obj[];
+		patch_make(a: string, opt_b: string, opt_c: diff_match_patch.Diff[]): diff_match_patch.patch_obj[];
 
 		/**
 		 * Given an array of patches, return another array that is identical.
