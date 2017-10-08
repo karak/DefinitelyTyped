@@ -53,6 +53,44 @@ declare module 'diff-match-patch' {
 		 * @return {!Array.<!diff_match_patch.Diff>} Array of diff tuples.
 		 */
 		diff_main(text1: string, text2: string, opt_checklines?: boolean, opt_deadline?: number): diff_match_patch.Diff[];
+		
+		/**
+		 * Find the 'middle snake' of a diff, split the problem in two
+		 * and return the recursively constructed diff.
+		 * See Myers 1986 paper: An O(ND) Difference Algorithm and Its Variations.
+		 * @param {string} text1 Old string to be diffed.
+		 * @param {string} text2 New string to be diffed.
+		 * @param {number} deadline Time at which to bail if not yet complete.
+		 * @return {!Array.<!diff_match_patch.Diff>} Array of diff tuples.
+		 * @private
+		 */
+		diff_bisect_(text1: string, text2: string, deadline: number): diff_match_patch.Diff[];
+
+		/**
+		 * Split two texts into an array of strings.  Reduce the texts to a string of
+		 * hashes where each Unicode character represents one line.
+		 * @param {string} text1 First string.
+		 * @param {string} text2 Second string.
+		 * @return {{chars1: string, chars2: string, lineArray: !Array.<string>}}
+		 *     An object containing the encoded text1, the encoded text2 and
+		 *     the array of unique strings.
+		 *     The zeroth element of the array of unique strings is intentionally blank.
+		 * @private
+		 */
+		diff_linesToChars_(text1: string, text2: string): {
+			chars1: string;
+			chars2: string;
+			lineArray: string[];
+		};
+
+		/**
+		 * Rehydrate the text in a diff from a string of line hashes to real lines of
+		 * text.
+		 * @param {!Array.<!diff_match_patch.Diff>} diffs Array of diff tuples.
+		 * @param {!Array.<string>} lineArray Array of unique strings.
+		 * @private
+		 */
+		diff_charsToLines_(diffs: diff_match_patch.Diff[], lineArray: string[]): void;
 
 		/**
 		 * Determine the common prefix of two strings.
@@ -69,7 +107,30 @@ declare module 'diff-match-patch' {
 		 * @param {string} text2 Second string.
 		 * @return {number} The number of characters common to the end of each string.
 		 */
-		diff_commonSuffix(text1: string, text2: string): number;
+		diff_commonSuffix(text1: string, text2: string): number;		
+
+		/**
+		 * Determine if the suffix of one string is the prefix of another.
+		 * @param {string} text1 First string.
+		 * @param {string} text2 Second string.
+		 * @return {number} The number of characters common to the end of the first
+		 *     string and the start of the second string.
+		 * @private
+		 */
+		diff_commonOverlap_(text1: string, text2: string): number;
+
+		/**
+		 * Do the two texts share a substring which is at least half the length of the
+		 * longer text?
+		 * This speedup can produce non-minimal diffs.
+		 * @param {string} text1 First string.
+		 * @param {string} text2 Second string.
+		 * @return {Array.<string>} Five element Array, containing the prefix of
+		 *     text1, the suffix of text1, the prefix of text2, the suffix of
+		 *     text2 and the common middle.  Or null if there was no match.
+		 * @private
+		 */
+		diff_halfMatch_(text1: string, text2: string): string[];
 
 		/**
 		 * Reduce the number of edits by eliminating semantically trivial equalities.
@@ -168,7 +229,35 @@ declare module 'diff-match-patch' {
 		 */
 		match_main(text: string, pattern: string, loc: number): number;
 
+		/**
+		 * Locate the best instance of 'pattern' in 'text' near 'loc' using the
+		 * Bitap algorithm.
+		 * @param {string} text The text to search.
+		 * @param {string} pattern The pattern to search for.
+		 * @param {number} loc The location to search around.
+		 * @return {number} Best match index or -1.
+		 * @private
+		 */
+		match_bitap_(text: string, pattern: string, loc: number): number;
+
+		/**
+		 * Initialise the alphabet for the Bitap algorithm.
+		 * @param {string} pattern The text to encode.
+		 * @return {!Object} Hash of character locations.
+		 * @private
+		 */
+		match_alphabet_(pattern: string): {[char: string]: number};
+
 		//  PATCH FUNCTIONS
+
+		/**
+		 * Increase the context until it is unique,
+		 * but don't let the pattern expand beyond Match_MaxBits.
+		 * @param {!diff_match_patch.patch_obj} patch The patch to grow.
+		 * @param {string} text Source text.
+		 * @private
+		 */
+		patch_addContext_(patch: diff_match_patch.patch_obj, text: string): void;
 
 		/**
 		 * Compute a list of patches to turn text1 into text2.
@@ -250,8 +339,8 @@ declare module 'diff-match-patch' {
 		/** Class representing one patch operation. */
 		class patch_obj {
 			diffs: Diff[];
-			start1?: number;
-			start2?: number;
+			start1: number | null;
+			start2: number | null;
 			length1: number;
 			length2: number;
 
