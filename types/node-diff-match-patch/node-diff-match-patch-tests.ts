@@ -1,22 +1,12 @@
-import diff_match_patch from 'diff-match-patch';
-import * as diff_match_patch_ns from 'diff-match-patch';
+import diff_match_patch from 'node-diff-match-patch';
 
-const DIFF_DELETE: number = diff_match_patch_ns.DIFF_DELETE;
-const DIFF_INSERT: number = diff_match_patch_ns.DIFF_INSERT;
-const DIFF_EQUAL: number = diff_match_patch_ns.DIFF_EQUAL;
-
-function testNamespaceClass() {
-	const memberInstance: diff_match_patch = new diff_match_patch_ns.diff_match_patch;
-}
-
+const DIFF_DELETE: number = diff_match_patch.DIFF_DELETE;
+const DIFF_INSERT: number = diff_match_patch.DIFF_INSERT;
+const DIFF_EQUAL: number = diff_match_patch.DIFF_EQUAL;
 const dmp = new diff_match_patch();
 
-/*
- * NOTE: We cannot use a module as following under TypesScript:
- *       `const DIFF_DELETE = diff_match_patch.DIFF_DELETE;`
- *       nor
- *       `const dmp = new diff_match_patch_ns();
- */
+// UNDONE: const memberInstance = new diff_match_patch.diff_match_patch();
+//         this stucture requires the class as both module itself and its member.
 
 // DIFF TEST FUNCTIONS
 
@@ -126,7 +116,11 @@ function testDiffMain() {
 // MATCH TEST FUNCTIONS
 
 function testMatchAlphabet() {
-  assertEquivalent({'a': 4, 'b': 2, 'c': 1} as {[char: string]: number}, dmp.match_alphabet_('abc'));
+  const expected: {[char: string]: number} = {};
+  expected['a'] = 4;
+  expected['b'] = 2;
+  expected['c'] = 1;
+  assertEquivalent(expected, dmp.match_alphabet_('abc'));
 }
 
 function testMatchBitap() {
@@ -144,7 +138,7 @@ function testMatchMain() {
 
 function testPatchObj() {
   // Patch Object.
-  var p = new diff_match_patch.patch_obj();
+  const p = new diff_match_patch.patch_obj();
   assertEquals(null, p.start1);
   assertEquals(null, p.start2);
 
@@ -181,14 +175,14 @@ function testPatchMake() {
   let expectedPatch = '@@ -1,8 +1,7 @@\n Th\n-at\n+e\n  qui\n@@ -21,17 +21,18 @@\n jump\n-ed\n+s\n  over \n-a\n+the\n  laz\n';
   let patches = dmp.patch_make(text2, text1);
   assertEquals(expectedPatch, dmp.patch_toText(patches));
-  
+
   // Method 1
   expectedPatch = '@@ -1,11 +1,12 @@\n Th\n-e\n+at\n  quick b\n@@ -22,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n';
   patches = dmp.patch_make(text1, text2);
   assertEquals(expectedPatch, dmp.patch_toText(patches));
 
   // Method 2
-  let diffs = dmp.diff_main(text1, text2, false);
+  const diffs = dmp.diff_main(text1, text2, false);
   patches = dmp.patch_make(diffs);
   assertEquals(expectedPatch, dmp.patch_toText(patches));
 
@@ -204,7 +198,14 @@ function testPatchMake() {
 function testPatchSplitMax() {
   const patches = dmp.patch_make('abcdefghijklmnopqrstuvwxyz01234567890', 'XabXcdXefXghXijXklXmnXopXqrXstXuvXwxXyzX01X23X45X67X89X0');
   dmp.patch_splitMax(patches);
-  assertEquals('@@ -1,32 +1,46 @@\n+X\n ab\n+X\n cd\n+X\n ef\n+X\n gh\n+X\n ij\n+X\n kl\n+X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\n uv\n+X\n wx\n+X\n yz\n+X\n 012345\n@@ -25,13 +39,18 @@\n zX01\n+X\n 23\n+X\n 45\n+X\n 67\n+X\n 89\n+X\n 0\n', dmp.patch_toText(patches));
+  assertEquals(
+	[
+	  '@@ -1,32 +1,46 @@\n',
+	  '+X\n ab\n+X\n cd\n+X\n ef\n+X\n gh\n+X\n ij\n+X\n kl\n+X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\nuv\n+X\n wx\n+X\n yz\n+X\n 012345\n',
+	  '@@ -25,13 +39,18 @@',
+	  '\n zX01\n+X\n 23\n+X\n 45\n+X\n 67\n+X\n 89\n+X\n 0\n'
+	].join(''),
+    dmp.patch_toText(patches));
 }
 
 function testPatchAddPadding() {
@@ -226,6 +227,6 @@ function testPatchApply() {
 declare function assertEquals<T>(expected: T, actual: T): void;
 
 declare function assertEquivalent<T>(expected: T[], actual: T[]): void;
-declare function assertEquivalent<T extends Object>(expected: T, actual: T): void;
+declare function assertEquivalent<T extends {}>(expected: T, actual: T): void;
 
 declare function assertLinesToCharsResultEquals(expected: {chars1: string, chars2: string, lineArray: string[]}, actual: {chars1: string, chars2: string, lineArray: string[]}): void;
