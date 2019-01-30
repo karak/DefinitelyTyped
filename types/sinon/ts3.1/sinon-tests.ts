@@ -338,7 +338,12 @@ function testSpy() {
 
     spy = sinon.spy(fn);
     spy = sinon.spy(instance, 'foo');
-    spy = sinon.spy(instance, 'bar', ['set', 'get']);
+
+    const spyProperty = sinon.spy(instance, 'bar', ['set', 'get']);
+    const getSpy: sinon.SinonSpy<any[], number> = spyProperty.get;
+    const setSpy: sinon.SinonSpy<number[], void> = spyProperty.set;
+    spy = getSpy;
+    spy = setSpy;
 
     let count = 0;
     count = spy.callCount;

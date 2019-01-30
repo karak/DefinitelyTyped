@@ -336,6 +336,10 @@ declare namespace Sinon {
         restore(): void;
     }
 
+    type SinonPropertySpy<TTypes extends keyof PropertyDescriptor> = SinonSpy & {
+        [P in TTypes]: SinonSpy;
+    };
+
     interface SinonSpyStatic {
         /**
          * Creates an anonymous function that records arguments, this value, exceptions and return values for all calls.
@@ -352,7 +356,8 @@ declare namespace Sinon {
          * The original method can be restored by calling object.method.restore().
          * The returned spy is the function object which replaced the original method. spy === object.method.
          */
-        <T>(obj: T, method: keyof T, types?: string[]): SinonSpy;
+        <T>(obj: T, method: keyof T): SinonSpy;
+        <TTypes extends keyof PropertyDescriptor, T>(obj: T, property: keyof T, types?: TTypes[]): SinonPropertySpy<TTypes>;
     }
 
     interface SinonStub extends SinonSpy {
